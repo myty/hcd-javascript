@@ -123,6 +123,8 @@ const queryStringToObject = <T>(
  * @param pathParams Object to transform into the supplied path.
  */
 const replacePathParams = (path: string, pathParams: any) => {
+    console.error("replacePathParams", path, pathParams);
+
     if (pathParams == null || path == null) {
         return path;
     }

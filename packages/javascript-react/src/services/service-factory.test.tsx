@@ -4,25 +4,100 @@ import { Factory } from "rosie";
 import { useEffect, useState } from "react";
 import { render } from "@testing-library/react";
 import { CoreUtils } from "@rsm-hcd/javascript-core";
-import {
-    MockAxiosUtils,
-    StubResourceRecord,
-    FactoryType,
-} from "@rsm-hcd/javascript-testing";
-import mockAxios from "jest-mock-axios";
+import { StubResourceRecord, FactoryType } from "@rsm-hcd/javascript-testing";
+import { delay, http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { Record } from "immutable";
+import { CanceledError } from "axios";
 import { ServiceFactory } from "./service-factory";
 
 // -----------------------------------------------------------------------------------------
 // #region Variables
 // -----------------------------------------------------------------------------------------
 
-const baseEndpoint = "tests";
+const endpoint = "tests";
+const baseEndpoint = `http://api.local/${endpoint}`;
 const cancellationTestsApiDelay = 10;
 const cancellationTestsAssertionDelay = 20;
 const resourceEndpoint = `${baseEndpoint}/:id`;
-const nestedBaseEndpoint = `nested/:nestedId/${baseEndpoint}`;
+const nestedBaseEndpoint = `http://api.local/nested/:nestedId/${endpoint}`;
 
 // #endregion Variables
+
+const {
+    server,
+    mockGetSuccess,
+    mockDeleteSuccess,
+    mockPutSuccess,
+    mockPostSuccess,
+} = (function setupMockAPI() {
+    let _mockGetResponse: () => Promise<any> = () => Promise.resolve();
+    let _mockPutResponse: () => Promise<any> = () => Promise.resolve();
+    let _mockPostResponse: () => Promise<any> = () => Promise.resolve();
+    let _mockDeleteResponse: () => Promise<any> = () => Promise.resolve();
+
+    const _resultObjectToJS = (resultObject: any | any[]): any | any[] => {
+        if (resultObject == null) {
+            return resultObject;
+        }
+
+        if (resultObject instanceof Array) {
+            return resultObject.map((r) => r.toJS());
+        }
+
+        if (Record.isRecord(resultObject)) {
+            return resultObject.toJS();
+        }
+
+        return resultObject;
+    };
+
+    const _createResponseResolver = (
+        resultObject: any | any[],
+        delayMs: number
+    ) => {
+        return async () => {
+            await delay(delayMs);
+            return HttpResponse.json({
+                resultObject: _resultObjectToJS(resultObject),
+            });
+        };
+    };
+
+    const _createSuccessMock = (
+        responseCallback: (response: () => Promise<any>) => void
+    ) => {
+        return (resultObject: any | any[], delayMs = 0) => {
+            const resolver = _createResponseResolver(resultObject, delayMs);
+            responseCallback(resolver);
+        };
+    };
+
+    return {
+        server: setupServer(
+            http.get(baseEndpoint, () => _mockGetResponse()),
+            http.get(resourceEndpoint, () => _mockGetResponse()),
+            http.get(nestedBaseEndpoint, () => _mockGetResponse()),
+            http.post(baseEndpoint, () => _mockPostResponse()),
+            http.post(nestedBaseEndpoint, () => _mockPostResponse()),
+            http.put(baseEndpoint, () => _mockPutResponse()),
+            http.put(resourceEndpoint, () => _mockPutResponse()),
+            http.delete(resourceEndpoint, () => _mockDeleteResponse())
+        ),
+        mockGetSuccess: _createSuccessMock((response) => {
+            _mockGetResponse = response;
+        }),
+        mockDeleteSuccess: _createSuccessMock((response) => {
+            _mockDeleteResponse = response;
+        }),
+        mockPutSuccess: _createSuccessMock((response) => {
+            _mockPutResponse = response;
+        }),
+        mockPostSuccess: _createSuccessMock((response) => {
+            _mockPostResponse = response;
+        }),
+    };
+})();
 
 // -----------------------------------------------------------------------------------------
 // #region Stubs
@@ -56,11 +131,21 @@ const itReturnsFunction = (func: Function, endpoint: string) => {
 // -----------------------------------------------------------------------------------------
 
 describe("ServiceFactory", () => {
-    const consoleErrorSpy = jest.spyOn(console, "error");
-    const MockAxios = MockAxiosUtils(mockAxios);
+    // const consoleErrorSpy = jest.spyOn(console, "error");
+    // const consoleWarnSpy = jest.spyOn(console, "warn");
+
+    beforeAll(() => {
+        server.listen();
+    });
 
     afterEach(() => {
-        consoleErrorSpy.mockReset();
+        // consoleErrorSpy.mockReset();
+        // consoleWarnSpy.mockReset();
+        server.resetHandlers();
+    });
+
+    afterAll(() => {
+        server.close();
     });
 
     // -------------------------------------------------------------------------------------------------
@@ -83,14 +168,13 @@ describe("ServiceFactory", () => {
                 StubResourceRecord,
                 resourceEndpoint
             );
+
             const record = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
-                {
-                    id: 20,
-                }
+                { id: 20 }
             );
 
-            MockAxios.putSuccess([record], cancellationTestsApiDelay);
+            mockPutSuccess([record], cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -124,6 +208,7 @@ describe("ServiceFactory", () => {
             // Act
             const { unmount } = render(<BulkUpdateStubComponent />);
             unmount();
+
             // Force a sleep longer than when API promise resolves
             await CoreUtils.sleep(cancellationTestsAssertionDelay);
 
@@ -138,16 +223,15 @@ describe("ServiceFactory", () => {
             // Arrange
             const expected = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
-                {
-                    id: 20,
-                }
+                { id: 20 }
             );
 
             const sut = ServiceFactory.bulkUpdate(
                 StubResourceRecord,
                 baseEndpoint
             );
-            MockAxios.putSuccess([expected]);
+
+            mockPutSuccess([expected]);
 
             // Act
             const response = await sut([expected], { id: expected.id });
@@ -197,7 +281,7 @@ describe("ServiceFactory", () => {
                 FactoryType.StubResourceRecord
             );
 
-            MockAxios.postSuccess(record, cancellationTestsApiDelay);
+            mockPostSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -246,7 +330,7 @@ describe("ServiceFactory", () => {
             );
 
             const sut = ServiceFactory.create(StubResourceRecord, baseEndpoint);
-            MockAxios.postSuccess(expected);
+            mockPostSuccess(expected);
 
             // Act
             const response = await sut(expected);
@@ -283,7 +367,7 @@ describe("ServiceFactory", () => {
                 }
             );
 
-            MockAxios.deleteSuccess(record, cancellationTestsApiDelay);
+            mockDeleteSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -323,7 +407,7 @@ describe("ServiceFactory", () => {
             // Arrange
             const sut = ServiceFactory.delete(resourceEndpoint);
 
-            MockAxios.deleteSuccess(undefined);
+            mockDeleteSuccess(undefined);
 
             // Act
             const response = await sut(10);
@@ -341,6 +425,30 @@ describe("ServiceFactory", () => {
 
     describe("get", () => {
         itReturnsFunction(ServiceFactory.get, baseEndpoint);
+
+        it("when has value returned, returns response with resultObject", async () => {
+            // Arrange
+            const sut = ServiceFactory.get<
+                StubResourceRecord,
+                StubResourceParams
+            >(StubResourceRecord, resourceEndpoint);
+            const record = Factory.build<StubResourceRecord>(
+                FactoryType.StubResourceRecord,
+                {
+                    id: 20,
+                }
+            );
+
+            mockGetSuccess(record);
+
+            // Act
+            const response = await sut({ id: record.id });
+
+            // Assert
+            expect(response.resultObject).not.toBeNull();
+            expect(response.resultObject).toBeInstanceOf(StubResourceRecord);
+            expect(response.resultObject!.name).toEqual(record.name);
+        });
 
         /**
          * Test ensures service factory in fact causes a react console.error to throw
@@ -361,7 +469,7 @@ describe("ServiceFactory", () => {
                 }
             );
 
-            MockAxios.getSuccess(record, cancellationTestsApiDelay);
+            mockGetSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -413,7 +521,7 @@ describe("ServiceFactory", () => {
                 StubResourceParams
             >(StubResourceRecord, resourceEndpoint);
 
-            MockAxios.getSuccess(expected);
+            mockGetSuccess(expected);
 
             // Act
             const response = await sut({ id: expected.id });
@@ -422,6 +530,39 @@ describe("ServiceFactory", () => {
             expect(response.resultObject).not.toBeNull();
             expect(response.resultObject).toBeInstanceOf(StubResourceRecord);
             expect(response.resultObject!.name).toEqual(expected.name);
+        });
+
+        it("when aborted, returns response without resultObject", async () => {
+            // Arrange
+            const expected = Factory.build<StubResourceRecord>(
+                FactoryType.StubResourceRecord,
+                { id: 20 }
+            );
+
+            const sut = ServiceFactory.get<
+                StubResourceRecord,
+                StubResourceParams
+            >(StubResourceRecord, resourceEndpoint);
+
+            mockGetSuccess(expected, cancellationTestsApiDelay);
+
+            // Act
+            const abortController = new AbortController();
+            const responsePromise = sut(
+                { id: expected.id },
+                undefined,
+                abortController.signal
+            );
+            abortController.abort();
+
+            // Assert
+            expect.assertions(1);
+
+            try {
+                await responsePromise;
+            } catch (err) {
+                expect(err).toBeInstanceOf(CanceledError);
+            }
         });
     });
 
@@ -453,7 +594,7 @@ describe("ServiceFactory", () => {
                 2
             );
 
-            MockAxios.listSuccess(expectedResults, cancellationTestsApiDelay);
+            mockGetSuccess(expectedResults, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -502,7 +643,7 @@ describe("ServiceFactory", () => {
                 StubResourceRecord,
                 baseEndpoint
             );
-            MockAxios.listSuccess(expectedResults);
+            mockGetSuccess(expectedResults);
 
             // Act
             const response = await sut();
@@ -563,7 +704,7 @@ describe("ServiceFactory", () => {
                 }
             );
 
-            MockAxios.postSuccess(record, cancellationTestsApiDelay);
+            mockPostSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -611,7 +752,7 @@ describe("ServiceFactory", () => {
                 StubNestedParams
             >(StubResourceRecord, nestedBaseEndpoint);
 
-            MockAxios.postSuccess(expected);
+            mockPostSuccess(expected);
 
             // Act
             const response = await sut(expected, { nestedId: 40 });
@@ -652,7 +793,7 @@ describe("ServiceFactory", () => {
                 2
             );
 
-            MockAxios.listSuccess(expectedResults, cancellationTestsApiDelay);
+            mockGetSuccess(expectedResults, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -703,7 +844,7 @@ describe("ServiceFactory", () => {
                 StubListQueryParams
             >(StubResourceRecord, nestedBaseEndpoint);
 
-            MockAxios.listSuccess(expectedResults);
+            mockGetSuccess(expectedResults);
 
             // Act
             const response = await sut({ nestedId: 40 });
@@ -751,7 +892,7 @@ describe("ServiceFactory", () => {
                 }
             );
 
-            MockAxios.putSuccess(record, cancellationTestsApiDelay);
+            mockPutSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -798,7 +939,7 @@ describe("ServiceFactory", () => {
             );
 
             const sut = ServiceFactory.update(StubResourceRecord, baseEndpoint);
-            MockAxios.putSuccess(expected);
+            mockPutSuccess(expected);
 
             // Act
             const response = await sut(expected);

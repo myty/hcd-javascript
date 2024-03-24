@@ -37,12 +37,13 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         resourceEndpoint: string
     ): BulkUpdateService<TRecord, TPathParams> {
-        return (records: TRecord[], pathParams?: any) =>
+        return (records: TRecord[], pathParams?: any, signal?: AbortSignal) =>
             _bulkUpdate<TRecord, TPathParams>(
                 recordType,
                 records,
                 resourceEndpoint,
-                pathParams
+                pathParams,
+                signal
             );
     },
 
@@ -59,8 +60,8 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         baseEndpoint: string
     ): CreateService<TRecord> {
-        return (record?: TRecord) =>
-            _create<TRecord>(recordType, baseEndpoint, record);
+        return (record?: TRecord, signal?: AbortSignal) =>
+            _create<TRecord>(recordType, baseEndpoint, record, signal);
     },
 
     /**
@@ -68,9 +69,9 @@ const ServiceFactory = {
      * @param recordType
      * @param resourceEndpoint
      */
-    delete(resourceEndpoint: string): DeleteService {
+    delete(resourceEndpoint: string, signal?: AbortSignal): DeleteService {
         return (id: number, pathParams?: any) =>
-            _delete(id, resourceEndpoint, pathParams);
+            _delete(id, resourceEndpoint, pathParams, signal);
     },
 
     /**
@@ -82,12 +83,17 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         resourceEndpoint: string
     ): GetService<TRecord, TPathParams, TQueryParams> {
-        return (pathParams: TPathParams, queryParams?: TQueryParams) =>
+        return (
+            pathParams: TPathParams,
+            queryParams?: TQueryParams,
+            signal?: AbortSignal
+        ) =>
             _get<TRecord, TPathParams, TQueryParams>(
                 recordType,
                 resourceEndpoint,
                 pathParams,
-                queryParams
+                queryParams,
+                signal
             );
     },
 
@@ -104,8 +110,8 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         baseEndpoint: string
     ): ListService<TRecord, TQueryParams> {
-        return (queryParams?: TQueryParams) =>
-            _list<TRecord>(recordType, baseEndpoint, null, queryParams);
+        return (queryParams?: TQueryParams, signal?: AbortSignal) =>
+            _list<TRecord>(recordType, baseEndpoint, null, queryParams, signal);
     },
 
     /**
@@ -118,7 +124,11 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         baseEndpoint: string
     ): NestedCreateService<TRecord, TPathParams> {
-        return (record: TRecord, pathParams: TPathParams) => {
+        return (
+            record: TRecord,
+            pathParams: TPathParams,
+            signal?: AbortSignal
+        ) => {
             const url = RouteUtils.getUrlFromPath(baseEndpoint, pathParams);
 
             if (!url) {
@@ -127,7 +137,7 @@ const ServiceFactory = {
                 );
             }
 
-            return _create<TRecord>(recordType, url, record);
+            return _create<TRecord>(recordType, url, record, signal);
         };
     },
 
@@ -140,8 +150,18 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         baseEndpoint: string
     ): NestedListService<TRecord, TPathParams, TQueryParams> {
-        return (pathParams: TPathParams, queryParams?: TQueryParams) =>
-            _list<TRecord>(recordType, baseEndpoint, pathParams, queryParams);
+        return (
+            pathParams: TPathParams,
+            queryParams?: TQueryParams,
+            signal?: AbortSignal
+        ) =>
+            _list<TRecord>(
+                recordType,
+                baseEndpoint,
+                pathParams,
+                queryParams,
+                signal
+            );
     },
 
     /**
@@ -153,12 +173,13 @@ const ServiceFactory = {
         recordType: new () => TRecord,
         resourceEndpoint: string
     ): UpdateService<TRecord, TPathParams> {
-        return (record: TRecord, pathParams?: any) =>
+        return (record: TRecord, pathParams?: any, signal?: AbortSignal) =>
             _update<TRecord, TPathParams>(
                 recordType,
                 record,
                 resourceEndpoint,
-                pathParams
+                pathParams,
+                signal
             );
     },
 };
@@ -188,7 +209,8 @@ const _bulkUpdate = async function <
     recordType: new () => TRecord,
     records: TRecord[],
     resourceEndpoint: string,
-    pathParams: TPathParams
+    pathParams: TPathParams,
+    signal?: AbortSignal
 ) {
     const url = RouteUtils.getUrlFromPath(resourceEndpoint, pathParams);
 
@@ -200,7 +222,8 @@ const _bulkUpdate = async function <
 
     const response = await axios.put(
         url,
-        records.map((r: TRecord) => r.toJS())
+        records.map((r: TRecord) => r.toJS()),
+        { signal }
     );
 
     return ServiceUtils.mapPagedAxiosResponse(recordType, response);
@@ -209,19 +232,25 @@ const _bulkUpdate = async function <
 const _create = async function <TRecord extends RecordType>(
     recordType: new () => TRecord,
     url: string,
-    record?: TRecord
+    record?: TRecord,
+    signal?: AbortSignal
 ) {
-    const requestData = record != null ? record.toJS() : null;
+    if (!record) {
+        throw new TypeError(
+            `Could not create resource. Record value was invalid.`
+        );
+    }
 
     return axios
-        .post(url, requestData)
+        .post(url, record.toJS(), { signal })
         .then((r) => ServiceUtils.mapAxiosResponse(recordType, r));
 };
 
 const _delete = async function (
     id: number,
     resourceEndpoint: string,
-    pathParams?: any
+    pathParams?: any,
+    signal?: AbortSignal
 ) {
     const url = _buildUrl(id, resourceEndpoint, pathParams);
 
@@ -232,15 +261,16 @@ const _delete = async function (
     }
 
     return axios
-        .delete(url)
+        .delete(url, { signal })
         .then((r) => ServiceUtils.mapAxiosResponse(Boolean, r));
 };
 
-const _get = async function <TRecord, TPathParams, TQueryParams = undefined>(
+const _get = function <TRecord, TPathParams, TQueryParams = undefined>(
     recordType: new () => TRecord,
     resourceEndpoint: string,
     pathParams: TPathParams,
-    queryParams?: TQueryParams
+    queryParams?: TQueryParams,
+    signal?: AbortSignal
 ) {
     const url = RouteUtils.getUrlFromPath(
         resourceEndpoint,
@@ -255,15 +285,16 @@ const _get = async function <TRecord, TPathParams, TQueryParams = undefined>(
     }
 
     return axios
-        .get(url)
-        .then((r) => ServiceUtils.mapAxiosResponse(recordType, r));
+        .get(url, { signal })
+        .then((result) => ServiceUtils.mapAxiosResponse(recordType, result));
 };
 
 const _list = async function <TRecord extends any>(
     recordType: new () => TRecord,
     baseEndpoint: string,
     pathParams?: any,
-    queryParams?: any
+    queryParams?: any,
+    signal?: AbortSignal
 ) {
     const url = RouteUtils.getUrlFromPath(
         baseEndpoint,
@@ -278,7 +309,7 @@ const _list = async function <TRecord extends any>(
     }
 
     return axios
-        .get(url)
+        .get(url, { signal })
         .then((r) => ServiceUtils.mapPagedAxiosResponse(recordType, r));
 };
 
@@ -289,7 +320,8 @@ const _update = async function <
     recordType: new () => TRecord,
     record: TRecord,
     resourceEndpoint: string,
-    pathParams?: TPathParams
+    pathParams?: TPathParams,
+    signal?: AbortSignal
 ) {
     const url = _buildUrl(record.id, resourceEndpoint, pathParams);
 
@@ -300,7 +332,7 @@ const _update = async function <
     }
 
     return axios
-        .put(url, record.toJS())
+        .put(url, record.toJS(), { signal })
         .then((r) => ServiceUtils.mapAxiosResponse(recordType, r));
 };
 

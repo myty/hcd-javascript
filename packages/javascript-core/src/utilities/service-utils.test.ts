@@ -286,7 +286,7 @@ describe("ServiceUtils", () => {
             );
 
             // Assert
-            expect(result.result instanceof ResultRecord).toBeTrue();
+            expect(result.resultObject).toBeInstanceOf(ResultRecord);
         });
     });
 
@@ -529,7 +529,7 @@ describe("ServiceUtils", () => {
             );
 
             // Assert
-            expect(result.results instanceof ResultRecord).toBeTrue();
+            expect(result.results).toBeInstanceOf(ResultRecord);
         });
     });
 

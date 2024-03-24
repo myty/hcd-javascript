@@ -8,5 +8,6 @@ import type { ServiceResponse } from "@rsm-hcd/javascript-core";
  */
 export type GetService<TRecord, TPathParams, TQueryParams = undefined> = (
     pathParams: TPathParams,
-    queryParams?: TQueryParams
+    queryParams?: TQueryParams,
+    signal?: AbortSignal
 ) => Promise<ServiceResponse<TRecord>>;

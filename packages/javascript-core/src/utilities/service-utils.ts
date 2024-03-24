@@ -114,13 +114,16 @@ function mapAxiosResponse<TRecord>(
         axiosResponse.data.resultObject = resultObject;
     }
 
-    return {
+    const result = {
         result: new ResultRecord<TRecord>(axiosResponse.data),
         resultObject,
         resultObjects: [],
         rowCount: 1,
         status: axiosResponse.status,
     };
+
+    console.log("mapAxiosResponse ", result);
+    return result;
 }
 
 /**

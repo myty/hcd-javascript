@@ -7,7 +7,6 @@ import {
     FactoryType,
 } from "@rsm-hcd/javascript-testing";
 import { CoreUtils } from "@rsm-hcd/javascript-core";
-import mockAxios from "jest-mock-axios";
 import { ServiceHookFactory } from "./service-hook-factory";
 
 // ---------------------------------------------------------------------------------------------
