@@ -64,7 +64,8 @@ describe("useDeleteService", () => {
         const serviceDelete = ServiceFactory.delete(resourceEndpoint);
         const onDeleted = jest.fn();
         const id = 1;
-        mockDeleteSuccess({ resultObject: true }, 100);
+        const apiTimeout = 100;
+        mockDeleteSuccess({ resultObject: true }, apiTimeout);
 
         // Act
         const { result, unmount } = renderHook(() =>
@@ -74,6 +75,8 @@ describe("useDeleteService", () => {
         unmount();
 
         // Assert
-        waitFor(() => expect(onDeleted).not.toHaveBeenCalled());
+        waitFor(() => expect(onDeleted).not.toHaveBeenCalled(), {
+            timeout: apiTimeout,
+        });
     });
 });
