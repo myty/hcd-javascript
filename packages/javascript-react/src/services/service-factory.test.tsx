@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-interface -- for testing purposes */
 
 import { Factory } from "rosie";
-import { useEffect, useState } from "react";
-import { render } from "@testing-library/react";
-import { CoreUtils } from "@rsm-hcd/javascript-core";
 import { StubResourceRecord, FactoryType } from "@rsm-hcd/javascript-testing";
 import { delay, http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -17,8 +14,7 @@ import { ServiceFactory } from "./service-factory";
 
 const endpoint = "tests";
 const baseEndpoint = `http://api.local/${endpoint}`;
-const cancellationTestsApiDelay = 10;
-const cancellationTestsAssertionDelay = 20;
+const apiDelay = 10;
 const resourceEndpoint = `${baseEndpoint}/:id`;
 const nestedBaseEndpoint = `http://api.local/nested/:nestedId/${endpoint}`;
 
@@ -155,70 +151,6 @@ describe("ServiceFactory", () => {
     describe("bulkUpdate", () => {
         itReturnsFunction(ServiceFactory.bulkUpdate, baseEndpoint);
 
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.bulkUpdate(
-                StubResourceRecord,
-                resourceEndpoint
-            );
-
-            const record = Factory.build<StubResourceRecord>(
-                FactoryType.StubResourceRecord,
-                { id: 20 }
-            );
-
-            mockPutSuccess([record], cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const BulkUpdateStubComponent = () => {
-                const [stubRecords, setStubRecords] = useState<
-                    StubResourceRecord[]
-                >([]);
-
-                useEffect(() => {
-                    async function updateStubRecords() {
-                        const result = await sut([record], { id: record.id });
-                        setStubRecords(result.resultObjects || []);
-                    }
-
-                    updateStubRecords();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return (
-                    <div>
-                        {stubRecords != null &&
-                            stubRecords.length > 0 &&
-                            stubRecords[0].name}
-                    </div>
-                );
-            };
-
-            // Act
-            const { unmount } = render(<BulkUpdateStubComponent />);
-            unmount();
-
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
-
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
             const expected = Factory.build<StubResourceRecord>(
@@ -265,64 +197,6 @@ describe("ServiceFactory", () => {
             }
         });
 
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const create = ServiceFactory.create(
-                StubResourceRecord,
-                baseEndpoint
-            );
-            const record = Factory.build<StubResourceRecord>(
-                FactoryType.StubResourceRecord
-            );
-
-            mockPostSuccess(record, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const CreateStubComponent = () => {
-                const [, setStubRecord] = useState<StubResourceRecord>(
-                    null as any
-                );
-
-                useEffect(() => {
-                    async function createStubRecord() {
-                        const result = await create(
-                            Factory.build<StubResourceRecord>(
-                                FactoryType.StubResourceRecord
-                            )
-                        );
-                        setStubRecord(result.resultObject!);
-                    }
-
-                    createStubRecord();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{record?.name}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<CreateStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
-
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
             const expected = Factory.build<StubResourceRecord>(
@@ -350,58 +224,6 @@ describe("ServiceFactory", () => {
 
     describe("delete", () => {
         itReturnsFunction(ServiceFactory.delete, baseEndpoint);
-
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.delete(resourceEndpoint);
-            const record = Factory.build<StubResourceRecord>(
-                FactoryType.StubResourceRecord,
-                {
-                    id: 20,
-                }
-            );
-
-            mockDeleteSuccess(record, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const DeleteStubComponent = () => {
-                const [deleted, setDeleted] = useState(false);
-
-                useEffect(() => {
-                    async function deleteUser() {
-                        const result = await sut(record.id);
-                        setDeleted((result.resultObject || false) as boolean);
-                    }
-
-                    deleteUser();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{deleted && "deleted"}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<DeleteStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
 
         it("when successful, given empty result, returns response without resultObject", async () => {
             // Arrange
@@ -450,63 +272,6 @@ describe("ServiceFactory", () => {
             expect(response.resultObject!.name).toEqual(record.name);
         });
 
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.get<
-                StubResourceRecord,
-                StubResourceParams
-            >(StubResourceRecord, resourceEndpoint);
-            const record = Factory.build<StubResourceRecord>(
-                FactoryType.StubResourceRecord,
-                {
-                    id: 20,
-                }
-            );
-
-            mockGetSuccess(record, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const GetStubComponent = () => {
-                const [, setStubRecord] = useState<StubResourceRecord>(
-                    null as any
-                );
-
-                useEffect(() => {
-                    async function getRecord() {
-                        const result = await sut({ id: record.id });
-                        setStubRecord(result.resultObject!);
-                    }
-
-                    getRecord();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{record?.name}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<GetStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
-
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
             const expected = Factory.build<StubResourceRecord>(
@@ -544,7 +309,7 @@ describe("ServiceFactory", () => {
                 StubResourceParams
             >(StubResourceRecord, resourceEndpoint);
 
-            mockGetSuccess(expected, cancellationTestsApiDelay);
+            mockGetSuccess(expected, apiDelay);
 
             // Act
             const abortController = new AbortController();
@@ -576,61 +341,6 @@ describe("ServiceFactory", () => {
         interface StubListParams {}
 
         itReturnsFunction(ServiceFactory.list, baseEndpoint);
-
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.list<
-                StubResourceRecord,
-                StubResourceParams
-            >(StubResourceRecord, baseEndpoint);
-            const expectedResults = Factory.buildList(
-                FactoryType.StubResourceRecord,
-                2
-            );
-
-            mockGetSuccess(expectedResults, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const ListStubComponent = () => {
-                const [records, setRecords] = useState<StubResourceRecord[]>(
-                    []
-                );
-
-                useEffect(() => {
-                    async function listStubRecords() {
-                        const result = await sut();
-                        setRecords(result.resultObjects);
-                    }
-
-                    listStubRecords();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{records?.map((u) => u.name)}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<ListStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
 
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
@@ -685,62 +395,6 @@ describe("ServiceFactory", () => {
             }
         });
 
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.nestedCreate<
-                StubResourceRecord,
-                StubNestedParams
-            >(StubResourceRecord, nestedBaseEndpoint);
-            const record = Factory.build<StubResourceRecord>(
-                FactoryType.StubResourceRecord,
-                {
-                    id: 20,
-                }
-            );
-
-            mockPostSuccess(record, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const NestedCreateStubComponent = () => {
-                const [stubRecord, setStubRecord] =
-                    useState<StubResourceRecord>(null as any);
-
-                useEffect(() => {
-                    async function createUser() {
-                        const result = await sut(record, { nestedId: 10 });
-                        setStubRecord(result.resultObject!);
-                    }
-
-                    createUser();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{stubRecord?.name}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<NestedCreateStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
-
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
             const expected = Factory.build<StubResourceRecord>(
@@ -774,62 +428,6 @@ describe("ServiceFactory", () => {
         interface StubListQueryParams {}
 
         itReturnsFunction(ServiceFactory.nestedList, nestedBaseEndpoint);
-
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.nestedList<
-                StubResourceRecord,
-                StubNestedParams,
-                StubListQueryParams
-            >(StubResourceRecord, nestedBaseEndpoint);
-            const expectedResults: StubResourceRecord[] = Factory.buildList(
-                FactoryType.StubResourceRecord,
-                2
-            );
-
-            mockGetSuccess(expectedResults, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const NestedListStubComponent = () => {
-                const [records, setRecords] = useState<StubResourceRecord[]>(
-                    []
-                );
-
-                useEffect(() => {
-                    async function listStubRecords() {
-                        const result = await sut({ nestedId: 20 });
-                        setRecords(result.resultObjects);
-                    }
-
-                    listStubRecords();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{records?.map((u) => u.name)}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<NestedListStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
 
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
@@ -871,63 +469,6 @@ describe("ServiceFactory", () => {
 
     describe("update", () => {
         itReturnsFunction(ServiceFactory.update, baseEndpoint);
-
-        /**
-         * Test ensures service factory in fact causes a react console.error to throw
-         * when the react component unmounts before the promise resolves.
-         *
-         * See ServiceHookFactory.test.tsx for test that verifies cancellation works
-         */
-
-        it("when unmounted before resolution, promise isn't cancelled and error thrown", async () => {
-            // Arrange
-            const sut = ServiceFactory.update(
-                StubResourceRecord,
-                resourceEndpoint
-            );
-            const record = Factory.build<StubResourceRecord>(
-                FactoryType.StubResourceRecord,
-                {
-                    id: 20,
-                }
-            );
-
-            mockPutSuccess(record, cancellationTestsApiDelay);
-
-            let isUnmounted = false;
-
-            const UpdateStubComponent = () => {
-                const [stubRecord, setStubRecord] =
-                    useState<StubResourceRecord>(null as any);
-
-                useEffect(() => {
-                    async function updateUser() {
-                        const result = await sut(record);
-                        setStubRecord(result.resultObject!);
-                    }
-
-                    updateUser();
-
-                    return () => {
-                        isUnmounted = true;
-                    };
-                }, []);
-
-                return <div>{stubRecord?.name}</div>;
-            };
-
-            // Act
-            const { unmount } = render(<UpdateStubComponent />);
-            unmount();
-            // Force a sleep longer than when API promise resolves
-            await CoreUtils.sleep(cancellationTestsAssertionDelay);
-
-            // Assert
-            expect(isUnmounted).toBeTrue();
-
-            // TODO: This is not working as expected. The console.error is not being thrown
-            // expect(consoleErrorSpy).toHaveBeenCalled();
-        });
 
         it("when successful, returns response mapped to supplied TRecord", async () => {
             // Arrange
