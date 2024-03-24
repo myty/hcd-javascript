@@ -1,8 +1,8 @@
 import axios from "axios";
 import { RouteUtils, ServiceUtils } from "@rsm-hcd/javascript-core";
-import type { BulkUpdateService } from "../types/bulk-update-service-type";
-import type { DeleteService } from "../types/delete-service-type";
-import type { CreateService } from "../types/create-service-type";
+import type { BulkUpdateServiceWithSignal } from "../types/bulk-update-service-type";
+import type { DeleteServiceWithSignal } from "../types/delete-service-type";
+import type { CreateServiceWithSignal } from "../types/create-service-type";
 import type { ListService } from "../types/list-service-type";
 import type { GetService } from "../types/get-service-type";
 import type { NestedCreateService } from "../types/nested-create-service-type";
@@ -36,7 +36,7 @@ const ServiceFactory = {
     bulkUpdate<TRecord extends RecordType, TPathParams extends any>(
         recordType: new () => TRecord,
         resourceEndpoint: string
-    ): BulkUpdateService<TRecord, TPathParams> {
+    ): BulkUpdateServiceWithSignal<TRecord, TPathParams> {
         return (records: TRecord[], pathParams?: any, signal?: AbortSignal) =>
             _bulkUpdate<TRecord, TPathParams>(
                 recordType,
@@ -59,7 +59,7 @@ const ServiceFactory = {
     create<TRecord extends RecordType>(
         recordType: new () => TRecord,
         baseEndpoint: string
-    ): CreateService<TRecord> {
+    ): CreateServiceWithSignal<TRecord> {
         return (record?: TRecord, signal?: AbortSignal) =>
             _create<TRecord>(recordType, baseEndpoint, record, signal);
     },
@@ -69,7 +69,10 @@ const ServiceFactory = {
      * @param recordType
      * @param resourceEndpoint
      */
-    delete(resourceEndpoint: string, signal?: AbortSignal): DeleteService {
+    delete(
+        resourceEndpoint: string,
+        signal?: AbortSignal
+    ): DeleteServiceWithSignal {
         return (id: number, pathParams?: any) =>
             _delete(id, resourceEndpoint, pathParams, signal);
     },

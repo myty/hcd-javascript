@@ -1,9 +1,6 @@
-/**
- * Disabling eslint rule as currently it does not support currying of custom hooks
- * and thinks we are calling it
- */
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { ServiceResponse } from "@rsm-hcd/javascript-core";
+import { CanceledError } from "axios";
 import { useCancellablePromise } from "../hooks/use-cancellable-promise";
 import type { BulkUpdateServiceHook } from "../types/bulk-update-service-hook-type";
 import type { CreateServiceHook } from "../types/create-service-hook-type";
@@ -34,22 +31,40 @@ const ServiceHookFactory = {
         recordType: new () => TRecord,
         resourceEndpoint: string
     ): BulkUpdateServiceHook<TRecord, TPathParams> {
+        const serviceUpdate = ServiceFactory.bulkUpdate(
+            recordType,
+            resourceEndpoint
+        );
+
         return () => {
-            const { cancellablePromise } = useCancellablePromise();
+            const abortControllerRef = useRef(new AbortController());
 
-            const serviceUpdate = ServiceFactory.bulkUpdate(
-                recordType,
-                resourceEndpoint
-            );
-
-            function update(
+            const update = useCallback(async function update(
                 records: TRecord[],
-                pathParams: TPathParams
+                pathParams?: TPathParams
             ): Promise<ServiceResponse<TRecord>> {
-                return cancellablePromise(serviceUpdate(records, pathParams));
-            }
+                try {
+                    return await serviceUpdate(
+                        records,
+                        pathParams,
+                        abortControllerRef.current.signal
+                    );
+                } catch (error) {
+                    if (!(error instanceof CanceledError)) {
+                        throw error;
+                    }
+                }
 
-            return { update: useCallback(update, []) };
+                return { status: 0, resultObjects: [], rowCount: 0 };
+            }, []);
+
+            useEffect(() => {
+                return () => {
+                    abortControllerRef.current.abort("unmounted");
+                };
+            }, []);
+
+            return { update };
         };
     },
 
@@ -67,21 +82,35 @@ const ServiceHookFactory = {
         recordType: new () => TRecord,
         baseEndpoint: string
     ): CreateServiceHook<TRecord> {
+        const serviceCreate = ServiceFactory.create(recordType, baseEndpoint);
+
         return () => {
-            const { cancellablePromise } = useCancellablePromise();
+            const abortControllerRef = useRef(new AbortController());
 
-            const serviceCreate = ServiceFactory.create(
-                recordType,
-                baseEndpoint
-            );
-
-            function create(
-                record?: TRecord
+            const create = useCallback(async function create(
+                record: TRecord
             ): Promise<ServiceResponse<TRecord>> {
-                return cancellablePromise(serviceCreate(record));
-            }
+                try {
+                    return await serviceCreate(
+                        record,
+                        abortControllerRef.current.signal
+                    );
+                } catch (error) {
+                    if (!(error instanceof CanceledError)) {
+                        throw error;
+                    }
+                }
 
-            return { create: useCallback(create, []) };
+                return { status: 0, resultObjects: [], rowCount: 0 };
+            }, []);
+
+            useEffect(() => {
+                return () => {
+                    abortControllerRef.current.abort("unmounted");
+                };
+            }, []);
+
+            return { create };
         };
     },
 
@@ -92,19 +121,37 @@ const ServiceHookFactory = {
      * @param baseEndpoint
      */
     useDelete(resourceEndpoint: string): DeleteServiceHook {
+        const serviceDelete = ServiceFactory.delete(resourceEndpoint);
+
         return () => {
-            const { cancellablePromise } = useCancellablePromise();
+            const abortControllerRef = useRef(new AbortController());
 
-            const serviceDelete = ServiceFactory.delete(resourceEndpoint);
-
-            function _delete(
+            const _delete = useCallback(async function (
                 id: number,
                 pathParams?: any
             ): Promise<ServiceResponse<Boolean>> {
-                return cancellablePromise(serviceDelete(id, pathParams));
-            }
+                try {
+                    return await serviceDelete(
+                        id,
+                        pathParams,
+                        abortControllerRef.current.signal
+                    );
+                } catch (error) {
+                    if (!(error instanceof CanceledError)) {
+                        throw error;
+                    }
+                }
 
-            return { delete: useCallback(_delete, []) };
+                return { status: 0, resultObjects: [], rowCount: 0 };
+            }, []);
+
+            useEffect(() => {
+                return () => {
+                    abortControllerRef.current.abort("unmounted");
+                };
+            }, []);
+
+            return { delete: _delete };
         };
     },
 

@@ -1,29 +1,39 @@
 import { useState, useEffect } from "react";
 import { Factory } from "rosie";
 import { render, waitFor } from "@testing-library/react";
-import {
-    MockAxiosUtils,
-    StubResourceRecord,
-    FactoryType,
-} from "@rsm-hcd/javascript-testing";
+import { StubResourceRecord, FactoryType } from "@rsm-hcd/javascript-testing";
 import { CoreUtils } from "@rsm-hcd/javascript-core";
+import { setupMockAPI } from "../tests/setup-mock-api";
 import { ServiceHookFactory } from "./service-hook-factory";
 
 // ---------------------------------------------------------------------------------------------
 // #region Variables
 // ---------------------------------------------------------------------------------------------
 
-const baseEndpoint = "records";
+const endpoint = "records";
+const baseEndpoint = `http://api.local/${endpoint}`;
 const cancellationTestsApiDelay = 10;
 const cancellationTestsAssertionDelay = 20;
 const resourceEndpoint = `${baseEndpoint}/:id`;
-const nestedBaseEndpoint = `nested/:nestedId/${baseEndpoint}`;
+const nestedBaseEndpoint = `http://api.local/nested/:nestedId/${endpoint}`;
 
 // #endregion Variables
 
 // ---------------------------------------------------------------------------------------------
 // #region Stubs
 // ---------------------------------------------------------------------------------------------
+
+const {
+    server,
+    mockGetSuccess,
+    mockDeleteSuccess,
+    mockPutSuccess,
+    mockPostSuccess,
+} = setupMockAPI({
+    baseEndpoint,
+    resourceEndpoint,
+    nestedBaseEndpoint,
+});
 
 interface StubNestedParams {
     nestedId: number;
@@ -48,8 +58,16 @@ const itReturnsFunction = (func: Function, endpoint: string) => {
 // ---------------------------------------------------------------------------------------------
 
 describe("ServiceHookFactory", () => {
-    const MockAxios = MockAxiosUtils(mockAxios);
     const sut = ServiceHookFactory;
+    beforeAll(() => {
+        server.listen();
+    });
+    afterEach(() => {
+        server.resetHandlers();
+    });
+    afterAll(() => {
+        server.close();
+    });
 
     // ---------------------------------------------------------------------------------------------
     // #region useBulkUpdate
@@ -58,18 +76,18 @@ describe("ServiceHookFactory", () => {
     describe("useBulkUpdate", () => {
         itReturnsFunction(sut.useBulkUpdate, baseEndpoint);
 
-        fit("when not-cancelled, resolves successfully", async () => {
+        it("when not-cancelled, resolves successfully", async () => {
             // Arrange
             const useBulkUpdate = sut.useBulkUpdate(
                 StubResourceRecord,
-                resourceEndpoint
+                baseEndpoint
             );
             const expectedStubRecord = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
                 { id: 10 }
             );
 
-            MockAxios.putSuccess([expectedStubRecord]);
+            mockPutSuccess([expectedStubRecord]);
 
             const UpdateStubComponent = () => {
                 const { update } = useBulkUpdate();
@@ -79,9 +97,7 @@ describe("ServiceHookFactory", () => {
 
                 useEffect(() => {
                     async function updateUser() {
-                        const result = await update([expectedStubRecord], {
-                            id: expectedStubRecord.id,
-                        });
+                        const result = await update([expectedStubRecord]);
                         setRecords(result.resultObjects);
                     }
                     updateUser();
@@ -115,12 +131,10 @@ describe("ServiceHookFactory", () => {
             );
             const record = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
-                {
-                    id: 10,
-                }
+                { id: 10 }
             );
 
-            MockAxios.putSuccess(record, cancellationTestsApiDelay);
+            mockPutSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -130,9 +144,7 @@ describe("ServiceHookFactory", () => {
 
                 useEffect(() => {
                     (async function updateUser() {
-                        const result = await update([record], {
-                            id: record.id,
-                        });
+                        const result = await update([record]);
                         setRecords(result.resultObjects);
                     })();
 
@@ -174,7 +186,7 @@ describe("ServiceHookFactory", () => {
             const expectedStubRecord = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord
             );
-            MockAxios.postSuccess(expectedStubRecord);
+            mockPostSuccess(expectedStubRecord);
 
             const CreateStubComponent = () => {
                 const { create } = useCreate();
@@ -219,7 +231,7 @@ describe("ServiceHookFactory", () => {
             const record = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord
             );
-            MockAxios.postSuccess(record, cancellationTestsApiDelay);
+            mockPostSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -272,7 +284,7 @@ describe("ServiceHookFactory", () => {
             const recordIdToDelete = 10;
 
             // eslint-disable-next-line no-new-wrappers -- Required for test
-            MockAxios.deleteSuccess(new Boolean(true));
+            mockDeleteSuccess(new Boolean(true));
 
             const DeleteStubComponent = () => {
                 const { delete: deleteRecord } = useDelete();
@@ -315,14 +327,12 @@ describe("ServiceHookFactory", () => {
             // Arrange
             const consoleErrorSpy = jest.spyOn(console, "error");
 
-            const useDelete = sut.useDelete(baseEndpoint);
+            const useDelete = sut.useDelete(resourceEndpoint);
             const record = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
-                {
-                    id: 10,
-                }
+                { id: 10 }
             );
-            MockAxios.deleteSuccess(record, cancellationTestsApiDelay);
+            mockDeleteSuccess(record, cancellationTestsApiDelay);
             let isUnmounted = false;
 
             const DeleteStubComponent = () => {
@@ -332,12 +342,10 @@ describe("ServiceHookFactory", () => {
                 );
 
                 useEffect(() => {
-                    async function deleteStubRecord() {
+                    (async function deleteStubRecord() {
                         await deleteRecord(record.id);
                         setRecord(record);
-                    }
-
-                    deleteStubRecord();
+                    })();
 
                     return () => {
                         isUnmounted = true;
@@ -376,7 +384,7 @@ describe("ServiceHookFactory", () => {
                 { id: 10 }
             );
 
-            MockAxios.getSuccess(expectedStubRecord);
+            mockGetSuccess(expectedStubRecord);
 
             const GetStubComponent = () => {
                 const { get } = useGet();
@@ -428,7 +436,7 @@ describe("ServiceHookFactory", () => {
                     id: 10,
                 }
             );
-            MockAxios.getSuccess(record, cancellationTestsApiDelay);
+            mockGetSuccess(record, cancellationTestsApiDelay);
             let isUnmounted = false;
 
             const GetStubComponent = () => {
@@ -482,7 +490,7 @@ describe("ServiceHookFactory", () => {
                 2
             );
 
-            MockAxios.listSuccess(expectedStubRecords);
+            mockGetSuccess(expectedStubRecords);
 
             const ListStubComponent = () => {
                 const { list } = useList();
@@ -535,7 +543,7 @@ describe("ServiceHookFactory", () => {
                     id: 10,
                 }
             );
-            MockAxios.getSuccess(record, cancellationTestsApiDelay);
+            mockGetSuccess(record, cancellationTestsApiDelay);
             let isUnmounted = false;
 
             const ListStubComponent = () => {
@@ -591,7 +599,7 @@ describe("ServiceHookFactory", () => {
                 FactoryType.StubResourceRecord
             );
 
-            MockAxios.postSuccess(expectedStubRecord);
+            mockPostSuccess(expectedStubRecord);
 
             const NestedCreateStubComponent = () => {
                 const { create } = useCreate();
@@ -639,7 +647,7 @@ describe("ServiceHookFactory", () => {
                 FactoryType.StubResourceRecord
             );
 
-            MockAxios.postSuccess(record, cancellationTestsApiDelay);
+            mockPostSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -700,7 +708,7 @@ describe("ServiceHookFactory", () => {
                 2
             );
 
-            MockAxios.listSuccess(expectedStubRecords);
+            mockGetSuccess(expectedStubRecords);
 
             const NestedListStubComponent = () => {
                 const { list } = useList();
@@ -754,7 +762,7 @@ describe("ServiceHookFactory", () => {
                 2
             );
 
-            MockAxios.getSuccess(records, cancellationTestsApiDelay);
+            mockGetSuccess(records, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -812,7 +820,7 @@ describe("ServiceHookFactory", () => {
                 { id: 10 }
             );
 
-            MockAxios.putSuccess(expectedStubRecord);
+            mockPutSuccess(expectedStubRecord);
 
             const UpdateStubComponent = () => {
                 const { update } = useUpdate();
@@ -858,7 +866,7 @@ describe("ServiceHookFactory", () => {
                 }
             );
 
-            MockAxios.putSuccess(record, cancellationTestsApiDelay);
+            mockPutSuccess(record, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
