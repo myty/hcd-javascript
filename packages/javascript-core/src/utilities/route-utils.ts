@@ -6,7 +6,7 @@ import { QueryStringArrayFormat } from "../enumerations/query-string-array-forma
 // #region Constants
 // -----------------------------------------------------------------------------------------
 
-const _routeParamRegEx = /(:[a-z_-]*)/gi;
+const _routeParamRegEx = /(:[a-z_-]+)/gi;
 
 // #endregion Constants
 
