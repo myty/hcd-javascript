@@ -19,15 +19,9 @@ const { server, mockDeleteSuccess } = setupMockAPI({
 // #endregion Setup
 
 describe("useDeleteService", () => {
-    beforeAll(() => {
-        server.listen();
-    });
-    afterEach(() => {
-        server.resetHandlers();
-    });
-    afterAll(() => {
-        server.close();
-    });
+    beforeAll(() => server.listen());
+    afterEach(() => server.resetHandlers());
+    afterAll(() => server.close());
 
     it("should create a delete service hook", () => {
         // Arrange
