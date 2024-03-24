@@ -2,12 +2,16 @@ import type { Config } from "jest";
 
 export default {
     rootDir: __dirname,
-    setupFilesAfterEnv: ["<rootDir>/src/setup-tests.ts"],
     /**
      * @note Include the polyfills in the "setupFiles"
      * to apply them BEFORE the test environment.
      */
     setupFiles: ["<rootDir>/jest.polyfills.ts"],
+    setupFilesAfterEnv: [
+        "<rootDir>/src/setup-tests.ts",
+        // polyfill window.resizeTo
+        "window-resizeto/polyfill",
+    ],
     transform: {
         "^.+\\.tsx?$": "@swc/jest",
     },

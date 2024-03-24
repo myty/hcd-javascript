@@ -9,7 +9,11 @@ import { FactoryType } from "./factory-type";
 const axiosResponseFactoryInitializer: FactoryInitializer = ({ define }) => {
     define<AxiosResponse>(FactoryType.AxiosResponse)
         .sequence("status", () => 200)
-        .sequence("statusText", () => "OK");
+        .sequence("statusText", () => "OK")
+        .sequence("data", () => ({
+            resultObject: {},
+            errors: [],
+        }));
 };
 
 // #endregion Factory

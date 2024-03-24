@@ -281,7 +281,7 @@ describe("ServiceUtils", () => {
 
             // Act
             const result = ServiceUtils.mapAxiosResponse(
-                StubResourceRecord,
+                ResultRecord,
                 axiosResponse
             );
 
@@ -503,7 +503,8 @@ describe("ServiceUtils", () => {
         test("it returns the mapped status from the original response", () => {
             // Arrange
             const axiosResponse = Factory.build<AxiosResponse>(
-                JavascriptTestingFactoryType.AxiosResponse
+                JavascriptTestingFactoryType.AxiosResponse,
+                { data: { resultObject: [{}, {}] } }
             );
 
             // Act
@@ -519,12 +520,13 @@ describe("ServiceUtils", () => {
         test("it returns results as a ResultRecord", () => {
             // Arrange
             const axiosResponse = Factory.build<AxiosResponse>(
-                JavascriptTestingFactoryType.AxiosResponse
+                JavascriptTestingFactoryType.AxiosResponse,
+                { data: { resultObject: [{}, {}] } }
             );
 
             // Act
             const result = ServiceUtils.mapPagedAxiosResponse(
-                StubResourceRecord,
+                ResultRecord,
                 axiosResponse
             );
 
