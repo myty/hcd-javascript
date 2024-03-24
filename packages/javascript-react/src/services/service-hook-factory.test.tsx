@@ -328,23 +328,25 @@ describe("ServiceHookFactory", () => {
             const consoleErrorSpy = jest.spyOn(console, "error");
 
             const useDelete = sut.useDelete(resourceEndpoint);
+            const recordIdToDelete = 10;
             const record = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
-                { id: 10 }
+                { id: recordIdToDelete }
             );
             mockDeleteSuccess(record, cancellationTestsApiDelay);
             let isUnmounted = false;
 
             const DeleteStubComponent = () => {
                 const { delete: deleteRecord } = useDelete();
-                const [record, setRecord] = useState<StubResourceRecord>(
-                    new StubResourceRecord()
-                );
+                const [isDeleted, setIsDeleted] = useState<boolean>(false);
 
                 useEffect(() => {
                     (async function deleteStubRecord() {
-                        await deleteRecord(record.id);
-                        setRecord(record);
+                        const deleteResult =
+                            await deleteRecord(recordIdToDelete);
+                        setIsDeleted(
+                            (deleteResult.resultObject || false) as boolean
+                        );
                     })();
 
                     return () => {
@@ -352,7 +354,7 @@ describe("ServiceHookFactory", () => {
                     };
                 }, []);
 
-                return <div>{record?.id}</div>;
+                return <div>{isDeleted && "deleted"}</div>;
             };
 
             // Act

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import type { ServiceResponse } from "@rsm-hcd/javascript-core";
 import { CanceledError } from "axios";
 import { useCancellablePromise } from "../hooks/use-cancellable-promise";
@@ -10,6 +10,7 @@ import type { ListServiceHook } from "../types/list-service-hook-type";
 import type { NestedCreateServiceHook } from "../types/nested-create-service-hook-type";
 import type { NestedListServiceHook } from "../types/nested-list-service-hook-type";
 import type { UpdateServiceHook } from "../types/update-service-hook-type";
+import { useAbortSignal } from "../hooks/use-abort-signal";
 import type { RecordType } from "./service-factory";
 import { ServiceFactory } from "./service-factory";
 
@@ -37,18 +38,14 @@ const ServiceHookFactory = {
         );
 
         return () => {
-            const abortControllerRef = useRef(new AbortController());
+            const signal = useAbortSignal();
 
             const update = useCallback(async function update(
                 records: TRecord[],
                 pathParams?: TPathParams
             ): Promise<ServiceResponse<TRecord>> {
                 try {
-                    return await serviceUpdate(
-                        records,
-                        pathParams,
-                        abortControllerRef.current.signal
-                    );
+                    return await serviceUpdate(records, pathParams, signal);
                 } catch (error) {
                     if (!(error instanceof CanceledError)) {
                         throw error;
@@ -56,12 +53,6 @@ const ServiceHookFactory = {
                 }
 
                 return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
-
-            useEffect(() => {
-                return () => {
-                    abortControllerRef.current.abort("unmounted");
-                };
             }, []);
 
             return { update };
@@ -85,16 +76,13 @@ const ServiceHookFactory = {
         const serviceCreate = ServiceFactory.create(recordType, baseEndpoint);
 
         return () => {
-            const abortControllerRef = useRef(new AbortController());
+            const signal = useAbortSignal();
 
             const create = useCallback(async function create(
                 record: TRecord
             ): Promise<ServiceResponse<TRecord>> {
                 try {
-                    return await serviceCreate(
-                        record,
-                        abortControllerRef.current.signal
-                    );
+                    return await serviceCreate(record, signal);
                 } catch (error) {
                     if (!(error instanceof CanceledError)) {
                         throw error;
@@ -102,12 +90,6 @@ const ServiceHookFactory = {
                 }
 
                 return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
-
-            useEffect(() => {
-                return () => {
-                    abortControllerRef.current.abort("unmounted");
-                };
             }, []);
 
             return { create };
@@ -124,18 +106,14 @@ const ServiceHookFactory = {
         const serviceDelete = ServiceFactory.delete(resourceEndpoint);
 
         return () => {
-            const abortControllerRef = useRef(new AbortController());
+            const signal = useAbortSignal();
 
             const _delete = useCallback(async function (
                 id: number,
                 pathParams?: any
             ): Promise<ServiceResponse<Boolean>> {
                 try {
-                    return await serviceDelete(
-                        id,
-                        pathParams,
-                        abortControllerRef.current.signal
-                    );
+                    return await serviceDelete(id, pathParams, signal);
                 } catch (error) {
                     if (!(error instanceof CanceledError)) {
                         throw error;
@@ -143,12 +121,6 @@ const ServiceHookFactory = {
                 }
 
                 return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
-
-            useEffect(() => {
-                return () => {
-                    abortControllerRef.current.abort("unmounted");
-                };
             }, []);
 
             return { delete: _delete };
