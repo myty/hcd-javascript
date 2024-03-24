@@ -69,11 +69,8 @@ const ServiceFactory = {
      * @param recordType
      * @param resourceEndpoint
      */
-    delete(
-        resourceEndpoint: string,
-        signal?: AbortSignal
-    ): DeleteServiceWithSignal {
-        return (id: number, pathParams?: any) =>
+    delete(resourceEndpoint: string): DeleteServiceWithSignal {
+        return (id: number, pathParams?: any, signal?: AbortSignal) =>
             _delete(id, resourceEndpoint, pathParams, signal);
     },
 

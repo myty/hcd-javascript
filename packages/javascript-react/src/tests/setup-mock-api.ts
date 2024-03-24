@@ -4,8 +4,8 @@ import { setupServer } from "msw/node";
 
 interface SetupMockAPIOptions {
     baseEndpoint: string;
-    resourceEndpoint: string;
-    nestedBaseEndpoint: string;
+    resourceEndpoint?: string;
+    nestedBaseEndpoint?: string;
 }
 
 export function setupMockAPI({
@@ -36,7 +36,7 @@ export function setupMockAPI({
 
     const _createResponseResolver = (
         resultObject: any | any[],
-        delayMs: number
+        delayMs = 0
     ) => {
         return async () => {
             await delay(delayMs);
@@ -55,16 +55,36 @@ export function setupMockAPI({
         };
     };
 
+    const resourceEndpointHandlers = () => {
+        if (resourceEndpoint == null) {
+            return [];
+        }
+
+        return [
+            http.get(resourceEndpoint, () => _mockGetResponse()),
+            http.put(resourceEndpoint, () => _mockPutResponse()),
+            http.delete(resourceEndpoint, () => _mockDeleteResponse()),
+        ];
+    };
+
+    const nestedEndpointHandlers = () => {
+        if (nestedBaseEndpoint == null) {
+            return [];
+        }
+
+        return [
+            http.get(nestedBaseEndpoint, () => _mockGetResponse()),
+            http.post(nestedBaseEndpoint, () => _mockPostResponse()),
+        ];
+    };
+
     return {
         server: setupServer(
             http.get(baseEndpoint, () => _mockGetResponse()),
-            http.get(resourceEndpoint, () => _mockGetResponse()),
-            http.get(nestedBaseEndpoint, () => _mockGetResponse()),
             http.post(baseEndpoint, () => _mockPostResponse()),
-            http.post(nestedBaseEndpoint, () => _mockPostResponse()),
             http.put(baseEndpoint, () => _mockPutResponse()),
-            http.put(resourceEndpoint, () => _mockPutResponse()),
-            http.delete(resourceEndpoint, () => _mockDeleteResponse())
+            ...resourceEndpointHandlers(),
+            ...nestedEndpointHandlers()
         ),
         mockGetSuccess: _createSuccessMock((response) => {
             _mockGetResponse = response;
