@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { useAbortSignal } from "./use-abort-signal";
 
-fdescribe("useAbortSignal", () => {
+describe("useAbortSignal", () => {
     it("should return an AbortSignal", () => {
         const { result } = renderHook(() => useAbortSignal());
         expect(result.current).toBeInstanceOf(AbortSignal);

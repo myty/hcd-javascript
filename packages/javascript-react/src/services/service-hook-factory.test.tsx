@@ -861,14 +861,12 @@ describe("ServiceHookFactory", () => {
             const consoleErrorSpy = jest.spyOn(console, "error");
 
             const useUpdate = sut.useUpdate(StubResourceRecord, baseEndpoint);
-            const record = Factory.build<StubResourceRecord>(
+            const stubbedRecord = Factory.build<StubResourceRecord>(
                 FactoryType.StubResourceRecord,
-                {
-                    id: 10,
-                }
+                { id: 10 }
             );
 
-            mockPutSuccess(record, cancellationTestsApiDelay);
+            mockPutSuccess(stubbedRecord, cancellationTestsApiDelay);
 
             let isUnmounted = false;
 
@@ -880,7 +878,7 @@ describe("ServiceHookFactory", () => {
 
                 useEffect(() => {
                     async function updateUser() {
-                        const result = await update(record);
+                        const result = await update(stubbedRecord);
                         setRecord(result.resultObject!);
                     }
 

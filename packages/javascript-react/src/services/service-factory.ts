@@ -3,11 +3,11 @@ import { RouteUtils, ServiceUtils } from "@rsm-hcd/javascript-core";
 import type { BulkUpdateServiceWithSignal } from "../types/bulk-update-service-type";
 import type { DeleteServiceWithSignal } from "../types/delete-service-type";
 import type { CreateServiceWithSignal } from "../types/create-service-type";
-import type { ListService } from "../types/list-service-type";
-import type { GetService } from "../types/get-service-type";
-import type { NestedCreateService } from "../types/nested-create-service-type";
-import type { NestedListService } from "../types/nested-list-service-type";
-import type { UpdateService } from "../types/update-service-type";
+import type { ListServiceWithSignal } from "../types/list-service-type";
+import type { GetServiceWithSignal } from "../types/get-service-type";
+import type { NestedCreateServiceWithSignal } from "../types/nested-create-service-type";
+import type { NestedListServiceWithSignal } from "../types/nested-list-service-type";
+import type { UpdateServiceWithSignal } from "../types/update-service-type";
 
 // ---------------------------------------------------------------------------------------------
 // #region Types
@@ -85,7 +85,7 @@ const ServiceFactory = {
     get<TRecord, TPathParams, TQueryParams = undefined>(
         recordType: new () => TRecord,
         resourceEndpoint: string
-    ): GetService<TRecord, TPathParams, TQueryParams> {
+    ): GetServiceWithSignal<TRecord, TPathParams, TQueryParams> {
         return (
             pathParams: TPathParams,
             queryParams?: TQueryParams,
@@ -112,7 +112,7 @@ const ServiceFactory = {
     list<TRecord, TQueryParams>(
         recordType: new () => TRecord,
         baseEndpoint: string
-    ): ListService<TRecord, TQueryParams> {
+    ): ListServiceWithSignal<TRecord, TQueryParams> {
         return (queryParams?: TQueryParams, signal?: AbortSignal) =>
             _list<TRecord>(recordType, baseEndpoint, null, queryParams, signal);
     },
@@ -126,14 +126,13 @@ const ServiceFactory = {
     nestedCreate<TRecord extends RecordType, TPathParams>(
         recordType: new () => TRecord,
         baseEndpoint: string
-    ): NestedCreateService<TRecord, TPathParams> {
+    ): NestedCreateServiceWithSignal<TRecord, TPathParams> {
         return (
             record: TRecord,
             pathParams: TPathParams,
             signal?: AbortSignal
         ) => {
             const url = RouteUtils.getUrlFromPath(baseEndpoint, pathParams);
-
             if (!url) {
                 throw new Error(
                     `Could not create nested resource. URL could not be constructed from path: ${baseEndpoint}`
@@ -152,7 +151,7 @@ const ServiceFactory = {
     nestedList<TRecord, TPathParams, TQueryParams>(
         recordType: new () => TRecord,
         baseEndpoint: string
-    ): NestedListService<TRecord, TPathParams, TQueryParams> {
+    ): NestedListServiceWithSignal<TRecord, TPathParams, TQueryParams> {
         return (
             pathParams: TPathParams,
             queryParams?: TQueryParams,
@@ -175,7 +174,7 @@ const ServiceFactory = {
     update<TRecord extends RecordType, TPathParams extends any>(
         recordType: new () => TRecord,
         resourceEndpoint: string
-    ): UpdateService<TRecord, TPathParams> {
+    ): UpdateServiceWithSignal<TRecord, TPathParams> {
         return (record: TRecord, pathParams?: any, signal?: AbortSignal) =>
             _update<TRecord, TPathParams>(
                 recordType,
