@@ -16,6 +16,10 @@ const { server, mockDeleteSuccess } = setupMockAPI({
     resourceEndpoint,
 });
 
+const TestService = {
+    delete: ServiceFactory.delete(resourceEndpoint),
+};
+
 // #endregion Setup
 
 describe("useDeleteService", () => {
@@ -24,11 +28,10 @@ describe("useDeleteService", () => {
     afterAll(() => server.close());
 
     it("should create a delete service hook", () => {
-        // Arrange
-        const serviceDelete = ServiceFactory.delete(resourceEndpoint);
-
-        // Act
-        const { result } = renderHook(() => useDeleteService(serviceDelete));
+        // Arrange & Act
+        const { result } = renderHook(() =>
+            useDeleteService(TestService.delete)
+        );
 
         // Assert
         expect(result.current.delete).toBeDefined();
@@ -36,26 +39,27 @@ describe("useDeleteService", () => {
 
     it("should call onDeleted with success when delete is successful", async () => {
         // Arrange
-        const serviceDelete = ServiceFactory.delete(resourceEndpoint);
         const onDeleted = jest.fn();
         const id = 1;
         mockDeleteSuccess({ resultObject: true });
 
         // Act
         const { result } = renderHook(() =>
-            useDeleteService(serviceDelete, onDeleted)
+            useDeleteService(TestService.delete, onDeleted)
         );
         result.current.delete(id);
 
         // Assert
-        waitFor(() =>
-            expect(onDeleted).toHaveBeenCalledWith({ id, success: true })
+        await waitFor(() =>
+            expect(onDeleted).toHaveBeenCalledWith({
+                id,
+                success: true,
+            })
         );
     });
 
     it("should not call onDeleted when hook is unmounted", async () => {
         // Arrange
-        const serviceDelete = ServiceFactory.delete(resourceEndpoint);
         const onDeleted = jest.fn();
         const id = 1;
         const apiTimeout = 100;
@@ -63,13 +67,13 @@ describe("useDeleteService", () => {
 
         // Act
         const { result, unmount } = renderHook(() =>
-            useDeleteService(serviceDelete, onDeleted)
+            useDeleteService(TestService.delete, onDeleted)
         );
         result.current.delete(id);
         unmount();
 
         // Assert
-        waitFor(() => expect(onDeleted).not.toHaveBeenCalled(), {
+        await waitFor(() => expect(onDeleted).not.toHaveBeenCalled(), {
             timeout: apiTimeout,
         });
     });

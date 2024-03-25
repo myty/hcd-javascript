@@ -9,7 +9,7 @@ import type { ServiceResponse } from "@rsm-hcd/javascript-core";
 export type DeleteService = (
     id: number,
     pathParams?: any
-) => Promise<ServiceResponse<Boolean>>;
+) => Promise<ServiceResponse<boolean>>;
 
 /**
  * Type defining the service function for deleting the supplied resource
@@ -22,4 +22,4 @@ export type DeleteServiceWithSignal = (
     id: number,
     pathParams?: any,
     signal?: AbortSignal
-) => Promise<ServiceResponse<Boolean>>;
+) => Promise<ServiceResponse<boolean>>;

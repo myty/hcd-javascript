@@ -78,14 +78,16 @@ export function setupMockAPI({
         ];
     };
 
+    const handlers = [
+        http.get(baseEndpoint, () => _mockGetResponse()),
+        http.post(baseEndpoint, () => _mockPostResponse()),
+        http.put(baseEndpoint, () => _mockPutResponse()),
+        ...resourceEndpointHandlers(),
+        ...nestedEndpointHandlers(),
+    ];
+
     return {
-        server: setupServer(
-            http.get(baseEndpoint, () => _mockGetResponse()),
-            http.post(baseEndpoint, () => _mockPostResponse()),
-            http.put(baseEndpoint, () => _mockPutResponse()),
-            ...resourceEndpointHandlers(),
-            ...nestedEndpointHandlers()
-        ),
+        server: setupServer(...handlers),
         mockGetSuccess: _createSuccessMock((response) => {
             _mockGetResponse = response;
         }),

@@ -1,5 +1,9 @@
 import axios from "axios";
-import { RouteUtils, ServiceUtils } from "@rsm-hcd/javascript-core";
+import {
+    RouteUtils,
+    ServiceResponse,
+    ServiceUtils,
+} from "@rsm-hcd/javascript-core";
 import type { BulkUpdateServiceWithSignal } from "../types/bulk-update-service-type";
 import type { DeleteServiceWithSignal } from "../types/delete-service-type";
 import type { CreateServiceWithSignal } from "../types/create-service-type";
@@ -250,7 +254,7 @@ const _delete = async function (
     resourceEndpoint: string,
     pathParams?: any,
     signal?: AbortSignal
-) {
+): Promise<ServiceResponse<boolean>> {
     const url = _buildUrl(id, resourceEndpoint, pathParams);
 
     if (!url) {
@@ -259,9 +263,18 @@ const _delete = async function (
         );
     }
 
-    return axios
-        .delete(url, { signal })
-        .then((r) => ServiceUtils.mapAxiosResponse(Boolean, r));
+    return axios.delete(url, { signal }).then((r) => {
+        console.log(r.data);
+
+        return {
+            resultObjects: [],
+            rowCount: 1,
+            status: r.status,
+            resultObject: r.data?.resultObject
+                ? Boolean(r.data?.resultObject)
+                : undefined,
+        };
+    });
 };
 
 const _get = function <TRecord, TPathParams, TQueryParams = undefined>(
