@@ -14,6 +14,11 @@ interface OnDeletedEvent {
     error?: any;
 }
 
+/**
+ * A hook that provides a delete function that can be used to delete a record by id.
+ * @param deleteService The delete service function that will be called to delete the record.
+ * @param onDeleted An optional callback that will be called after the record has been deleted.
+ */
 export function useDeleteService(
     deleteService: DeleteServiceWithSignal,
     onDeleted?: (evt: OnDeletedEvent) => void
