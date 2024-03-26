@@ -78,7 +78,7 @@ describe("useListService", () => {
 
         beforeAll(() => {
             records = [new TestRecord({ id: 1, value: "test" })];
-            mockGetSuccess({ resultObject: records }, 200);
+            mockGetSuccess(records, 200);
         });
 
         it("should set results", async () => {
@@ -89,7 +89,7 @@ describe("useListService", () => {
 
             // Assert
             await waitFor(() => {
-                expect(result.current.results).toBe(records);
+                expect(result.current.results).toStrictEqual(records);
             });
         });
 
