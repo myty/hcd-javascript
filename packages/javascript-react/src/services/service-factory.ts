@@ -1,9 +1,6 @@
 import axios from "axios";
-import {
-    RouteUtils,
-    ServiceResponse,
-    ServiceUtils,
-} from "@rsm-hcd/javascript-core";
+import type { ServiceResponse } from "@rsm-hcd/javascript-core";
+import { RouteUtils, ServiceUtils } from "@rsm-hcd/javascript-core";
 import type { BulkUpdateServiceWithSignal } from "../types/bulk-update-service-type";
 import type { DeleteServiceWithSignal } from "../types/delete-service-type";
 import type { CreateServiceWithSignal } from "../types/create-service-type";
@@ -264,8 +261,6 @@ const _delete = async function (
     }
 
     return axios.delete(url, { signal }).then((r) => {
-        console.log(r.data);
-
         return {
             resultObjects: [],
             rowCount: 1,

@@ -26,8 +26,8 @@ export function useDeleteService(
                 const result = await deleteService(id, pathParams, signal);
                 onDeleted?.({
                     id,
+                    success: result?.resultObject ?? false,
                     pathParams,
-                    success: result.result?.resultObject,
                 });
             } catch (error) {
                 if (!(error instanceof CanceledError)) {
