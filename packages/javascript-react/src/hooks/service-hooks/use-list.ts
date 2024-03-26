@@ -25,7 +25,6 @@ export function useListService<TRecord = any, TQueryParams = {}>(
         (async function list() {
             try {
                 const result = await listService(queryParams, signal);
-                console.log(result);
                 setResults(result.resultObjects);
                 setIsLoading(false);
             } catch (error: unknown) {
@@ -43,7 +42,7 @@ export function useListService<TRecord = any, TQueryParams = {}>(
 
     useEffect(() => {
         list();
-    }, []);
+    }, [list]);
 
     return {
         error,
