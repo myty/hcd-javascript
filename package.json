@@ -28,7 +28,7 @@
         "lint-staged": "^15.2.2",
         "prettier": "^3.2.5",
         "turbo": "latest",
-        "typedoc": "^0.25.9"
+        "typedoc": "^0.25.12"
     },
     "engines": {
         "node": ">=20",
