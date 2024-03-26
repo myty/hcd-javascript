@@ -12,16 +12,18 @@ interface UseListServiceHook<TRecord> {
 /**
  * A hook that provides a list function that can be used to list records.
  * @param listService The list service function that will be called to list the records.
+ * @param queryParams The query parameters that will be passed to the list service.
  */
 export function useListService<TRecord = any, TQueryParams = {}>(
-    listService: ListServiceWithSignal<TRecord, TQueryParams>
+    listService: ListServiceWithSignal<TRecord, TQueryParams>,
+    queryParams?: TQueryParams
 ): UseListServiceHook<TRecord> {
     const signal = useAbortSignal();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error>();
     const [results, setResults] = useState<TRecord[]>([]);
 
-    const list = useCallback((queryParams?: TQueryParams) => {
+    const list = useCallback(() => {
         (async function list() {
             try {
                 const result = await listService(queryParams, signal);
@@ -38,7 +40,7 @@ export function useListService<TRecord = any, TQueryParams = {}>(
                 setIsLoading(false);
             }
         })();
-    }, []);
+    }, [queryParams]);
 
     useEffect(() => {
         list();

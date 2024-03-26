@@ -21,6 +21,16 @@
 // #endregion Components
 
 // -----------------------------------------------------------------------------------------
+// #region Service Hooks
+// -----------------------------------------------------------------------------------------
+
+export { useListService } from "./hooks/service-hooks/use-list";
+export { useGetService } from "./hooks/service-hooks/use-get";
+export { useDeleteService } from "./hooks/service-hooks/use-delete";
+
+// #endregion
+
+// -----------------------------------------------------------------------------------------
 // #region Hooks
 // -----------------------------------------------------------------------------------------
 

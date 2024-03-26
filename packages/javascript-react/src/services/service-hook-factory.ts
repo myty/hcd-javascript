@@ -110,7 +110,7 @@ const ServiceHookFactory = {
             const _delete = useCallback(async function (
                 id: number,
                 pathParams?: any
-            ): Promise<ServiceResponse<Boolean>> {
+            ): Promise<ServiceResponse<boolean>> {
                 try {
                     return await serviceDelete(id, pathParams, signal);
                 } catch (error) {
