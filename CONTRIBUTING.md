@@ -12,8 +12,4 @@ This repo is now distributing packages for both module loaded applications as we
     -   Add a small, quick example to test that peer dependency within [test-global-distribution.html](./test-global-distribution.html). You will need to run `npm run build` in order to regenerate the global package beforehand. Open up the HTML file in your browser and validate there are no javascript errors.
 3.  We need to be careful of loosely adding new peer dependencies to this repo. Adding new peer dependencies to this repo means that the global package will slowly but surely increase in size with peer dependency code (if bundling) OR force consumers to pre-load the peer dependencies (if excluding from bundling). Neither of these approaches are ideal. When considering a new peer dependency, please consider adding an issue to the repo before hand so others can be involved early in the process.
 
-### Automated Testing
-
-This repo uses a simple Cypress test to open and test [test-global-distribution.html](./test-global-distribution.html) to validate there are no javascript errors. Also, any unhandled dependencies within `package.json/dependencies` will throw errors during the build process. Make sure you add them either as externals or bundles to prevent these build errors.
-
 Additional information on contributing to this repo is in the [Contributing Guide](https://github.com/rsm-hcd/hcd-javascript/blob/master/CONTRIBUTING.md) in the Home repo.

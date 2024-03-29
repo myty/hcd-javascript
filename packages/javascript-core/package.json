@@ -30,7 +30,6 @@
         "@types/rosie": "^0.0.43",
         "axios": "^1.6.8",
         "cross-env": "^7.0.3",
-        "cypress": "^13.7.1",
         "humanize-plus": "^1.8.2",
         "i18next": "^23.10.1",
         "i18next-browser-languagedetector": "^7.2.0",
@@ -84,7 +83,6 @@
         "lint:fix": "pnpm run lint --fix",
         "prepublishOnly": "npm run build:prod",
         "test": "jest ./src",
-        "test-cypress": "cypress run",
         "watch": "tsc --pretty --watch",
         "watch:coverage": "jest ./src --coverage --watch",
         "watch:test": "jest ./src --watch"
