@@ -73,6 +73,84 @@ describe("useListService", () => {
         });
     });
 
+    describe("when hook unmounts", () => {
+        let listSpy: jest.SpyInstance;
+        let records: TestRecord[] = [];
+        beforeAll(() => {
+            records = [new TestRecord({ id: 1, value: "test" })];
+            mockGetSuccess(records, 200);
+            listSpy = jest.spyOn(TestService, "list");
+        });
+        afterEach(() => {
+            listSpy.mockRestore();
+        });
+
+        it("should not call the list service again", async () => {
+            // Arrange & Act
+            const { unmount } = renderHook(() =>
+                useListService(TestService.list)
+            );
+            unmount();
+
+            // Assert
+            await waitFor(() => {
+                expect(listSpy).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        it("should not return results", async () => {
+            // Arrange & Act
+            const { result, unmount } = renderHook(() =>
+                useListService(TestService.list)
+            );
+            unmount();
+
+            // Assert
+            await waitFor(() => {
+                expect(result.current.results).toHaveLength(0);
+            });
+        });
+    });
+
+    describe("when list rerenders", () => {
+        let listSpy: jest.SpyInstance;
+        let records: TestRecord[] = [];
+        beforeAll(() => {
+            records = [new TestRecord({ id: 1, value: "test" })];
+            mockGetSuccess(records, 200);
+            listSpy = jest.spyOn(TestService, "list");
+        });
+        afterEach(() => {
+            listSpy.mockRestore();
+        });
+
+        it("should not call the list service again", async () => {
+            // Arrange & Act
+            const { rerender } = renderHook(() =>
+                useListService(TestService.list)
+            );
+            rerender();
+
+            // Assert
+            await waitFor(() => {
+                expect(listSpy).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        it("should return results", async () => {
+            // Arrange & Act
+            const { result, rerender } = renderHook(() =>
+                useListService(TestService.list)
+            );
+            rerender();
+
+            // Assert
+            await waitFor(() => {
+                expect(result.current.results).toHaveLength(1);
+            });
+        });
+    });
+
     describe("when list service is successful", () => {
         let records: TestRecord[] = [];
 
