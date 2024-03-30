@@ -25,22 +25,25 @@ export function useDeleteService(
 ): UseDeleteServiceHook {
     const signal = useAbortSignal();
 
-    const _delete = useCallback((id: number, pathParams?: any) => {
-        (async function () {
-            try {
-                const result = await deleteService(id, pathParams, signal);
-                onDeleted?.({
-                    id,
-                    success: result?.resultObject ?? false,
-                    pathParams,
-                });
-            } catch (error) {
-                if (!(error instanceof CanceledError)) {
-                    onDeleted?.({ id, pathParams, success: false, error });
+    const _delete = useCallback(
+        (id: number, pathParams?: any) => {
+            (async function () {
+                try {
+                    const result = await deleteService(id, pathParams, signal);
+                    onDeleted?.({
+                        id,
+                        success: result?.resultObject ?? false,
+                        pathParams,
+                    });
+                } catch (error) {
+                    if (!(error instanceof CanceledError)) {
+                        onDeleted?.({ id, pathParams, success: false, error });
+                    }
                 }
-            }
-        })();
-    }, []);
+            })();
+        },
+        [deleteService, onDeleted, signal]
+    );
 
     return { delete: _delete };
 }

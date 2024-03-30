@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks -- factory methods are incorrectly identified as callbacks */
 import { useCallback } from "react";
 import type { ServiceResponse } from "@rsm-hcd/javascript-core";
 import { CanceledError } from "axios";

@@ -37,7 +37,7 @@ describe("useGetService", () => {
         it("should create a get service hook", () => {
             // Arrange & Act
             const { result } = renderHook(() =>
-                useGetService(TestService.get, { id: 0 })
+                useGetService(TestService.get, { pathParams: { id: 0 } })
             );
 
             // Assert
@@ -47,7 +47,7 @@ describe("useGetService", () => {
         it("should have a loading state", () => {
             // Arrange & Act
             const { result } = renderHook(() =>
-                useGetService(TestService.get, { id: 0 })
+                useGetService(TestService.get, { pathParams: { id: 0 } })
             );
 
             // Assert
@@ -57,7 +57,7 @@ describe("useGetService", () => {
         it("should not have an error", () => {
             // Arrange & Act
             const { result } = renderHook(() =>
-                useGetService(TestService.get, { id: 0 })
+                useGetService(TestService.get, { pathParams: { id: 0 } })
             );
 
             // Assert
@@ -76,7 +76,9 @@ describe("useGetService", () => {
         it("should set results", async () => {
             // Arrange & Act
             const { result } = renderHook(() =>
-                useGetService(TestService.get, { id: record.id })
+                useGetService(TestService.get, {
+                    pathParams: { id: record.id },
+                })
             );
 
             // Assert
@@ -88,7 +90,9 @@ describe("useGetService", () => {
         it("should have a false loading state", async () => {
             // Arrange & Act
             const { result } = renderHook(() =>
-                useGetService(TestService.get, { id: record.id })
+                useGetService(TestService.get, {
+                    pathParams: { id: record.id },
+                })
             );
 
             // Assert

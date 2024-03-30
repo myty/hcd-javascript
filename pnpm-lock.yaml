@@ -186,6 +186,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      eslint-plugin-react-hooks:
+        specifier: ^4.6.0
+        version: 4.6.0(eslint@8.57.0)
       humanize-plus:
         specifier: 1.8.2
         version: 1.8.2

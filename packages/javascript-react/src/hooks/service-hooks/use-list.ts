@@ -49,7 +49,7 @@ export function useListService<TRecord = any, TQueryParams = {}>(
                 }
             })();
         },
-        [queryParams]
+        [listService, queryParams]
     );
 
     const refresh = useCallback(() => {

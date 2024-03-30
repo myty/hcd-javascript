@@ -12,6 +12,7 @@ export function useAsyncEffect(
     asyncEffect: AsyncEffectCallback,
     deps: DependencyList
 ) {
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deps are the dependencies of the asyncEffect
     const asyncCallback = useCallback<AsyncEffectCallback>(asyncEffect, deps);
 
     useEffect(() => {
