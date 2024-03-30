@@ -40,20 +40,23 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const update = useCallback(async function update(
-                records: TRecord[],
-                pathParams?: TPathParams
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceUpdate(records, pathParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const update = useCallback(
+                async function update(
+                    records: TRecord[],
+                    pathParams?: TPathParams
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceUpdate(records, pathParams, signal);
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { update };
         };
@@ -78,19 +81,22 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const create = useCallback(async function create(
-                record: TRecord
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceCreate(record, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const create = useCallback(
+                async function create(
+                    record: TRecord
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceCreate(record, signal);
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { create };
         };
@@ -108,20 +114,23 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const _delete = useCallback(async function (
-                id: number,
-                pathParams?: any
-            ): Promise<ServiceResponse<boolean>> {
-                try {
-                    return await serviceDelete(id, pathParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const _delete = useCallback(
+                async function (
+                    id: number,
+                    pathParams?: any
+                ): Promise<ServiceResponse<boolean>> {
+                    try {
+                        return await serviceDelete(id, pathParams, signal);
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { delete: _delete };
         };
@@ -146,20 +155,27 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const get = useCallback(async function get(
-                pathParams: TPathParams,
-                queryParams?: TQueryParams
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceGet(pathParams, queryParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const get = useCallback(
+                async function get(
+                    pathParams: TPathParams,
+                    queryParams?: TQueryParams
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceGet(
+                            pathParams,
+                            queryParams,
+                            signal
+                        );
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { get };
         };
@@ -187,19 +203,22 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const list = useCallback(async function list(
-                queryParams?: TQueryParams
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceList(queryParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const list = useCallback(
+                async function list(
+                    queryParams?: TQueryParams
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceList(queryParams, signal);
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { list };
         };
@@ -223,20 +242,23 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const create = useCallback(async function create(
-                record: TRecord,
-                pathParams: TPathParams
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceCreate(record, pathParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const create = useCallback(
+                async function create(
+                    record: TRecord,
+                    pathParams: TPathParams
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceCreate(record, pathParams, signal);
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { create };
         };
@@ -261,20 +283,27 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const list = useCallback(async function list(
-                pathParams: TPathParams,
-                queryParams?: TQueryParams
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceList(pathParams, queryParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const list = useCallback(
+                async function list(
+                    pathParams: TPathParams,
+                    queryParams?: TQueryParams
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceList(
+                            pathParams,
+                            queryParams,
+                            signal
+                        );
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { list };
         };
@@ -298,20 +327,23 @@ const ServiceHookFactory = {
         return () => {
             const signal = useAbortSignal();
 
-            const update = useCallback(async function update(
-                record: TRecord,
-                pathParams?: TPathParams
-            ): Promise<ServiceResponse<TRecord>> {
-                try {
-                    return await serviceUpdate(record, pathParams, signal);
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        throw error;
+            const update = useCallback(
+                async function update(
+                    record: TRecord,
+                    pathParams?: TPathParams
+                ): Promise<ServiceResponse<TRecord>> {
+                    try {
+                        return await serviceUpdate(record, pathParams, signal);
+                    } catch (error) {
+                        if (!(error instanceof CanceledError)) {
+                            throw error;
+                        }
                     }
-                }
 
-                return { status: 0, resultObjects: [], rowCount: 0 };
-            }, []);
+                    return { status: 0, resultObjects: [], rowCount: 0 };
+                },
+                [signal]
+            );
 
             return { update };
         };
