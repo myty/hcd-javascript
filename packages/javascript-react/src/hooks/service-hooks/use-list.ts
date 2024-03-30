@@ -7,6 +7,12 @@ interface UseListServiceHook<TRecord> {
     error?: Error;
     isLoading: boolean;
     results: TRecord[];
+    refresh: () => void;
+}
+
+interface UseListServiceHookOptions<TQueryParams> {
+    autoLoad?: boolean;
+    queryParams?: TQueryParams;
 }
 
 /**
@@ -16,39 +22,55 @@ interface UseListServiceHook<TRecord> {
  */
 export function useListService<TRecord = any, TQueryParams = {}>(
     listService: ListServiceWithSignal<TRecord, TQueryParams>,
-    queryParams?: TQueryParams
+    options: UseListServiceHookOptions<TQueryParams> = {}
 ): UseListServiceHook<TRecord> {
+    const { autoLoad = true, queryParams } = options;
+
     const signal = useAbortSignal();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error>();
     const [results, setResults] = useState<TRecord[]>([]);
 
-    const list = useCallback(() => {
-        (async function list() {
-            try {
-                const result = await listService(queryParams, signal);
-                setResults(result.resultObjects);
-                setIsLoading(false);
-            } catch (error: unknown) {
-                if (
-                    error instanceof Error &&
-                    !(error instanceof CanceledError)
-                ) {
-                    setError(error);
+    const list = useCallback(
+        (signal?: AbortSignal) => {
+            (async function list() {
+                try {
+                    const result = await listService(queryParams, signal);
+                    setResults(result.resultObjects);
+                } catch (error: unknown) {
+                    if (
+                        error instanceof Error &&
+                        !(error instanceof CanceledError)
+                    ) {
+                        setError(error);
+                    }
+                } finally {
+                    setIsLoading(false);
                 }
-            } finally {
-                setIsLoading(false);
-            }
-        })();
-    }, [queryParams]);
+            })();
+        },
+        [queryParams]
+    );
+
+    const refresh = useCallback(() => {
+        setIsLoading(true);
+        list(signal);
+    }, [list, signal]);
 
     useEffect(() => {
-        list();
-    }, [list]);
+        if (!autoLoad) {
+            return;
+        }
+
+        const controller = new AbortController();
+        list(controller.signal);
+        return () => controller.abort();
+    }, [autoLoad, list]);
 
     return {
         error,
         isLoading,
         results,
+        refresh,
     };
 }

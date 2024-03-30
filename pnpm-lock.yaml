@@ -320,6 +320,9 @@ importers:
 
   samples/todo:
     dependencies:
+      '@rsm-hcd/javascript-core':
+        specifier: workspace:*
+        version: link:../../packages/javascript-core
       '@rsm-hcd/javascript-react':
         specifier: workspace:*
         version: link:../../packages/javascript-react

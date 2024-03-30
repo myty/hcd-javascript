@@ -1,30 +1,19 @@
-import { Record } from "immutable";
-import { ServiceFactory, useListService } from "@rsm-hcd/javascript-react";
+import { useListService } from "@rsm-hcd/javascript-react";
+import { TodoService } from "./services/todo-service";
 import "./App.css";
 
-interface Todo {
-    id: number;
-    value: string;
-}
-
-class TestRecord extends Record<Todo>({
-    id: 0,
-    value: "",
-}) {}
-
-const TodoService = {
-    list: ServiceFactory.list(TestRecord, "api/todos"),
-};
-
 function App() {
-    const { results } = useListService(TodoService.list);
+    const { results, refresh } = useListService(TodoService.list);
 
     return (
-        <ul>
-            {results.map((todo) => (
-                <li key={todo.id}>{todo.value}</li>
-            ))}
-        </ul>
+        <>
+            <button onClick={refresh}>Refresh</button>
+            <ul>
+                {results.map((todo) => (
+                    <li key={todo.id}>{todo.description}</li>
+                ))}
+            </ul>
+        </>
     );
 }
 
