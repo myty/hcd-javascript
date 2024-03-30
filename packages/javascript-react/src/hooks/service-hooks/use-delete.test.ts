@@ -37,43 +37,38 @@ describe("useDeleteService", () => {
         expect(result.current.delete).toBeDefined();
     });
 
-    it("should call onDeleted with success when delete is successful", async () => {
+    it("should update deleted when delete is successful", async () => {
         // Arrange
-        const onDeleted = jest.fn();
         const id = 1;
         mockDeleteSuccess(true);
 
         // Act
         const { result } = renderHook(() =>
-            useDeleteService(TestService.delete, onDeleted)
+            useDeleteService(TestService.delete)
         );
         result.current.delete(id);
 
         // Assert
         await waitFor(() => {
-            expect(onDeleted).toHaveBeenCalledWith({
-                id,
-                success: true,
-            });
+            expect(result.current.deleted.length).toBe(1);
         });
     });
 
-    it("should not call onDeleted when hook is unmounted", async () => {
+    it("should not update deleted when hook is unmounted", async () => {
         // Arrange
-        const onDeleted = jest.fn();
         const id = 1;
         const apiTimeout = 100;
         mockDeleteSuccess(true, apiTimeout);
 
         // Act
         const { result, unmount } = renderHook(() =>
-            useDeleteService(TestService.delete, onDeleted)
+            useDeleteService(TestService.delete)
         );
         result.current.delete(id);
         unmount();
 
         // Assert
-        await waitFor(() => expect(onDeleted).not.toHaveBeenCalled(), {
+        await waitFor(() => expect(result.current.deleted.length).not.toBe(1), {
             timeout: apiTimeout,
         });
     });

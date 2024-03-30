@@ -1,49 +1,57 @@
 import { CanceledError } from "axios";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useAbortSignal } from "../use-abort-signal";
 import type { DeleteServiceWithSignal } from "../../types/delete-service-type";
 
 interface UseDeleteServiceHook {
-    delete: (id: number, pathParams?: any) => void;
-}
-
-interface OnDeletedEvent {
-    id: number;
-    pathParams?: any;
-    success: boolean;
-    error?: any;
+    isDeleting: boolean;
+    delete: (id: number, pathParams?: Record<string, unknown>) => void;
+    deleted: number[];
+    error?: Error;
 }
 
 /**
  * A hook that provides a delete function that can be used to delete a record by id.
  * @param deleteService The delete service function that will be called to delete the record.
- * @param onDeleted An optional callback that will be called after the record has been deleted.
  */
 export function useDeleteService(
-    deleteService: DeleteServiceWithSignal,
-    onDeleted?: (evt: OnDeletedEvent) => void
+    deleteService: DeleteServiceWithSignal
 ): UseDeleteServiceHook {
     const signal = useAbortSignal();
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [error, setError] = useState<Error>();
+    const [deleted, setDeleted] = useState<number[]>([]);
 
     const _delete = useCallback(
-        (id: number, pathParams?: any) => {
+        (id: number, pathParams?: Record<string, unknown>) => {
             (async function () {
                 try {
-                    const result = await deleteService(id, pathParams, signal);
-                    onDeleted?.({
+                    setIsDeleting(true);
+                    const { resultObject } = await deleteService(
                         id,
-                        success: result?.resultObject ?? false,
-                        pathParams,
-                    });
-                } catch (error) {
-                    if (!(error instanceof CanceledError)) {
-                        onDeleted?.({ id, pathParams, success: false, error });
+                        { id, ...pathParams },
+                        signal
+                    );
+
+                    if (resultObject !== true) {
+                        throw new Error("Result object is null");
                     }
+
+                    setDeleted((deleted) => [...deleted, id]);
+                } catch (error) {
+                    if (
+                        error instanceof Error &&
+                        !(error instanceof CanceledError)
+                    ) {
+                        setError(error);
+                    }
+                } finally {
+                    setIsDeleting(false);
                 }
             })();
         },
-        [deleteService, onDeleted, signal]
+        [deleteService, signal]
     );
 
-    return { delete: _delete };
+    return { delete: _delete, deleted, error, isDeleting };
 }

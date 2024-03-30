@@ -19,6 +19,8 @@ const todos: Todo[] = [
     { id: 2, description: "Test2" },
 ];
 
+let nextTodoId = 3;
+
 export const handlers = [
     http.get("/api/todos", () => {
         return HttpResponse.json(ServiceResponseFactory.create(todos));
@@ -35,7 +37,7 @@ export const handlers = [
     }),
     http.post("/api/todos", async ({ request }) => {
         const todo = (await request.json()) as Todo;
-        const newTodo = { ...todo, id: todos.length + 1 };
+        const newTodo = { ...todo, id: nextTodoId++ };
         todos.push(newTodo);
 
         return HttpResponse.json(ServiceResponseFactory.create(newTodo));
