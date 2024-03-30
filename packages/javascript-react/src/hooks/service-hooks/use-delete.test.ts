@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import { act } from "react-dom/test-utils";
 import { ServiceFactory } from "../../services/service-factory";
 import { setupMockAPI } from "../../tests/setup-mock-api";
 import { useDeleteService } from "./use-delete";
@@ -41,12 +42,14 @@ describe("useDeleteService", () => {
         // Arrange
         const id = 1;
         mockDeleteSuccess(true);
-
-        // Act
         const { result } = renderHook(() =>
             useDeleteService(TestService.delete)
         );
-        result.current.delete(id);
+
+        // Act
+        act(() => {
+            result.current.delete(id);
+        });
 
         // Assert
         await waitFor(() => {
@@ -59,13 +62,17 @@ describe("useDeleteService", () => {
         const id = 1;
         const apiTimeout = 100;
         mockDeleteSuccess(true, apiTimeout);
-
-        // Act
         const { result, unmount } = renderHook(() =>
             useDeleteService(TestService.delete)
         );
-        result.current.delete(id);
-        unmount();
+
+        // Act
+        act(() => {
+            result.current.delete(id);
+        });
+        act(() => {
+            unmount();
+        });
 
         // Assert
         await waitFor(() => expect(result.current.deleted.length).not.toBe(1), {
